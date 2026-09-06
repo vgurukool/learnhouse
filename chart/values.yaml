@@ -1,0 +1,91 @@
+replicaCount: 2
+
+image:
+  repository: vgurukool/learnhouse
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+    # eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/learnhouse-irsa
+  name: ""
+
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 80
+  collabPort: 4000
+  targetCollabPort: 4000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "learnhouse"
+  hosts:
+    - host: learnhouse.vgurukool.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: learnhouse-tls
+      hosts:
+        - learnhouse.vgurukool.com
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 80
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 15
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+env:
+  NODE_ENV: "production"
+  LEARNHOUSE_OSS: "true"
+  NEXT_PUBLIC_LEARNHOUSE_OSS: "true"
+  PORT: "8000"
+  LEARNHOUSE_PORT: "9000"
+  COLLAB_PORT: "4000"
+  HOSTNAME: "0.0.0.0"
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

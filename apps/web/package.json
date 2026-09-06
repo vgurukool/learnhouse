@@ -178,7 +178,7 @@
     "prosemirror-view": "1.42.3",
     "prosemirror-model": "1.25.11",
     "nth-check": ">=2.0.1",
-    "dompurify": ">=3.2.4",
+    "dompurify": "^3.3.1",
     "postcss": ">=8.4.31",
     "ws": ">=8.21.1",
     "fast-uri": ">=3.1.4",

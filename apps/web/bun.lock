@@ -166,7 +166,7 @@
     "brace-expansion@5": {
       ".": ">=5.0.7",
     },
-    "dompurify": ">=3.2.4",
+    "dompurify": "^3.3.1",
     "fast-uri": ">=3.1.4",
     "js-yaml": ">=4.1.1",
     "jspdf": ">=4.2.1",

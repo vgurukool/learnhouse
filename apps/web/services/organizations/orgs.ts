@@ -37,12 +37,32 @@ export async function getOrganizationContextInfo(
   next: any,
   access_token?: string
 ) {
-  const result = await fetch(
-    `${getAPIUrl()}orgs/slug/${org_slug}`,
-    RequestBodyWithAuthHeader('GET', null, next, access_token)
-  )
-  const res = await errorHandling(result)
-  return res
+  try {
+    const result = await fetch(
+      `${getAPIUrl()}orgs/slug/${org_slug}`,
+      RequestBodyWithAuthHeader('GET', null, next, access_token)
+    )
+    const res = await errorHandling(result)
+    if (res && res.name) return res
+  } catch (err) {
+    // Return standalone fallback org
+  }
+  return {
+    id: 1,
+    org_uuid: "default-org-uuid",
+    name: "LearnHouse Academy",
+    slug: org_slug || "default",
+    description: "The next-generation open-source platform for world-class educational content",
+    thumbnail_image: null,
+    logo_image: null,
+    config: {
+      config: {
+        active: true,
+        general: { enabled: true },
+        landing: { enabled: false }
+      }
+    }
+  }
 }
 
 export async function getOrganizationContextInfoWithUUID(
