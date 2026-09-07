@@ -1,7 +1,7 @@
 replicaCount: 2
 
 image:
-  repository: vgurukool/learnhouse
+  repository: ayusing/learnhouse
   pullPolicy: IfNotPresent
   tag: "latest"
 
