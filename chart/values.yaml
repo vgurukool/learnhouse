@@ -106,6 +106,8 @@ env:
   LEARNHOUSE_INITIAL_ORG_NAME: "Vgurukool Academy"
   LEARNHOUSE_INITIAL_ORG_SLUG: "default"
   LEARNHOUSE_CONTENT_DELIVERY_TYPE: "filesystem"
+  LEARNHOUSE_REDIS_CONNECTION_STRING: "redis://learnhouse-redis:6379"
+  LEARNHOUSE_COOKIE_DOMAIN_ALLOW_BROAD: "true"
 
 nodeSelector: {}
 tolerations: []
