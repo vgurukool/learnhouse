@@ -85,6 +85,12 @@ env:
   LEARNHOUSE_PORT: "9000"
   COLLAB_PORT: "4000"
   HOSTNAME: "0.0.0.0"
+  LEARNHOUSE_AUTH_JWT_SECRET_KEY: "cnoe-vgurukool-learnhouse-jwt-secret-key-2026-prod"
+  LEARNHOUSE_DOMAIN: "learnhouse.vgurukool.com"
+  LEARNHOUSE_FRONTEND_DOMAIN: "learnhouse.vgurukool.com"
+  LEARNHOUSE_SSL: "true"
+  NEXT_PUBLIC_API_URL: "https://learnhouse.vgurukool.com/api/v1"
+  NEXT_PUBLIC_COLLAB_URL: "https://learnhouse.vgurukool.com/collab"
 
 nodeSelector: {}
 tolerations: []
