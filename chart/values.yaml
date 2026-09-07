@@ -63,19 +63,19 @@ livenessProbe:
   httpGet:
     path: /
     port: http
-  initialDelaySeconds: 30
+  initialDelaySeconds: 45
   periodSeconds: 20
-  timeoutSeconds: 5
-  failureThreshold: 3
+  timeoutSeconds: 10
+  failureThreshold: 5
 
 readinessProbe:
   httpGet:
     path: /
     port: http
-  initialDelaySeconds: 15
+  initialDelaySeconds: 25
   periodSeconds: 10
-  timeoutSeconds: 3
-  failureThreshold: 3
+  timeoutSeconds: 10
+  failureThreshold: 5
 
 env:
   NODE_ENV: "production"
@@ -93,6 +93,7 @@ env:
   NEXTAUTH_SECRET: "cnoe-vgurukool-nextauth-secret-key-2026-prod"
   LEARNHOUSE_AUTH_JWT_SECRET_KEY: "cnoe-vgurukool-learnhouse-jwt-secret-key-2026-prod"
   COLLAB_INTERNAL_KEY: "cnoe-vgurukool-collab-internal-key-2026-prod"
+  LEARNHOUSE_SQL_CONNECTION_STRING: "postgresql://learnhouse:LearnHouse2026SecurePass@backstage-postgresql.backstage.svc.cluster.local:5432/learnhouse"
   NEXT_PUBLIC_LEARNHOUSE_API_URL: "https://learnhouse.vgurukool.com/api/v1/"
   NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL: "https://learnhouse.vgurukool.com/"
   NEXT_PUBLIC_LEARNHOUSE_DOMAIN: "learnhouse.vgurukool.com"
