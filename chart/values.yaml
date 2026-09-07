@@ -93,7 +93,7 @@ env:
   NEXTAUTH_SECRET: "cnoe-vgurukool-nextauth-secret-key-2026-prod"
   LEARNHOUSE_AUTH_JWT_SECRET_KEY: "cnoe-vgurukool-learnhouse-jwt-secret-key-2026-prod"
   COLLAB_INTERNAL_KEY: "cnoe-vgurukool-collab-internal-key-2026-prod"
-  LEARNHOUSE_SQL_CONNECTION_STRING: "postgresql://learnhouse:LearnHouse2026SecurePass@backstage-postgresql.backstage.svc.cluster.local:5432/learnhouse"
+  LEARNHOUSE_SQL_CONNECTION_STRING: "postgresql://learnhouse:LearnHouse2026SecurePass@learnhouse-db:5432/learnhouse"
   NEXT_PUBLIC_LEARNHOUSE_API_URL: "https://learnhouse.vgurukool.com/api/v1/"
   NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL: "https://learnhouse.vgurukool.com/"
   NEXT_PUBLIC_LEARNHOUSE_DOMAIN: "learnhouse.vgurukool.com"

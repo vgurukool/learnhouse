@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: learnhouse-db
+  labels:
+    app.kubernetes.io/name: learnhouse-db
+spec:
+  serviceName: learnhouse-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: learnhouse-db
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: learnhouse-db
+    spec:
+      containers:
+      - name: postgres
+        image: pgvector/pgvector:pg16
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          value: learnhouse
+        - name: POSTGRES_USER
+          value: learnhouse
+        - name: POSTGRES_PASSWORD
+          value: LearnHouse2026SecurePass
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "gp3"
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: learnhouse-db
+  labels:
+    app.kubernetes.io/name: learnhouse-db
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+    name: postgres
+  selector:
+    app.kubernetes.io/name: learnhouse-db
