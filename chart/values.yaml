@@ -2,8 +2,8 @@ replicaCount: 2
 
 image:
   repository: ayusing/learnhouse
-  pullPolicy: IfNotPresent
-  tag: "latest"
+  pullPolicy: Always
+  tag: "sso-v1"
 
 imagePullSecrets: []
 nameOverride: ""
