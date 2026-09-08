@@ -116,7 +116,7 @@ function BubbleInner({ orgslug, open, onOpenChange, sessionToLoad }: CopilotBubb
     enabled: !!(org?.slug && accessToken),
     staleTime: 60_000,
   })
-  const courses = coursesData?.data || coursesData || []
+  const courses = (coursesData as any)?.data || coursesData || []
 
   useEffect(() => {
     if (messages.length > 0 && messagesContainerRef.current) {

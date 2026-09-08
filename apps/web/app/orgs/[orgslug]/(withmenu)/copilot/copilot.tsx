@@ -142,7 +142,7 @@ export function CopilotChat({ orgslug }: CopilotProps) {
     enabled: !!org?.slug,
     staleTime: 60_000,
   })
-  const courses = coursesData?.data || coursesData || []
+  const courses = (coursesData as any)?.data || coursesData || []
 
   const selectedCourseName = selectedCourse
     ? courses.find?.((c: any) => c.course_uuid === selectedCourse)?.name || 'Selected Course'
