@@ -390,14 +390,16 @@ async def signWithKeycloak(
         )
 
         target_org_id = org_id or 1
-        user = await create_user(
+        created_user_read = await create_user(
             request, db_session, current_user, user_object, target_org_id, is_oauth=True, signup_provider="keycloak"
         )
-        user.email_verified = True
-        user.email_verified_at = datetime.now(timezone.utc).isoformat()
-        db_session.add(user)
-        await db_session.commit()
-        await db_session.refresh(user)
+        user = (await db_session.execute(select(User).where(User.id == created_user_read.id))).scalars().first()
+        if user:
+            user.email_verified = True
+            user.email_verified_at = datetime.now(timezone.utc).isoformat()
+            db_session.add(user)
+            await db_session.commit()
+            await db_session.refresh(user)
 
         client_ip = get_client_ip(request)
         await update_login_info(user, client_ip, db_session)

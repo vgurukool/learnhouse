@@ -54,6 +54,7 @@ from src.services.auth.session import issue_session_or_challenge
 from src.security.session_context import (
     AUTH_METHOD_GOOGLE,
     AUTH_METHOD_PASSWORD,
+    AUTH_METHOD_SSO,
     carry_session_claims,
 )
 from src.db.organizations import Organization
@@ -692,7 +693,6 @@ async def third_party_login(
         # An org that has turned Google off must not be joinable — or reachable —
         # through the Google button. Same door-level refusal as password login.
         from src.services.orgs.auth_policy import enforce_login_auth_method
-        from src.security.session_context import AUTH_METHOD_SSO
 
         _expected_method = AUTH_METHOD_GOOGLE if body.provider == "google" else AUTH_METHOD_SSO
         await enforce_login_auth_method(db_session, org_id, _expected_method)
