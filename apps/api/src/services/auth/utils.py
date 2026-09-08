@@ -308,3 +308,153 @@ async def signWithGoogle(
     )
 
     return UserRead.model_validate(user)
+
+
+async def get_keycloak_user_info(access_token: str) -> dict:
+    keycloak_internal = os.environ.get(
+        "KEYCLOAK_INTERNAL_URL", "http://keycloak.keycloak.svc.cluster.local/keycloak"
+    )
+    keycloak_realm = os.environ.get("KEYCLOAK_REALM", "cnoe")
+    userinfo_url = f"{keycloak_internal.rstrip('/')}/realms/{keycloak_realm}/protocol/openid-connect/userinfo"
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(userinfo_url, headers=headers)
+            if r.status_code == 200:
+                return r.json()
+    except Exception as e:
+        logger.warning("Internal Keycloak userinfo lookup failed: %s, trying external URL", e)
+
+    keycloak_url = os.environ.get("KEYCLOAK_URL", "https://vgurukool.com/keycloak")
+    userinfo_url_pub = f"{keycloak_url.rstrip('/')}/realms/{keycloak_realm}/protocol/openid-connect/userinfo"
+    async with httpx.AsyncClient(timeout=10, verify=False) as client:
+        r = await client.get(userinfo_url_pub, headers=headers)
+        if r.status_code != 200:
+            logger.error("Keycloak userinfo failed with status %s: %s", r.status_code, r.text)
+            raise HTTPException(
+                status_code=401,
+                detail="Keycloak token could not be validated",
+            )
+        return r.json()
+
+
+async def signWithKeycloak(
+    request: Request,
+    access_token: str,
+    email: Optional[str],
+    org_id: Optional[int],
+    current_user: AnonymousUser,
+    db_session: AsyncSession,
+) -> UserRead:
+    keycloak_user = await get_keycloak_user_info(access_token)
+
+    raw_email = keycloak_user.get("email")
+    username_pref = keycloak_user.get("preferred_username")
+
+    if not raw_email and username_pref:
+        raw_email = f"{username_pref}@vgurukool.com"
+    elif not raw_email and email:
+        raw_email = email
+
+    if not raw_email:
+        raise HTTPException(
+            status_code=401,
+            detail="Keycloak did not return a valid email or username",
+        )
+
+    user_email = raw_email.strip().lower()
+
+    user = (await db_session.execute(
+        select(User).where(func.lower(User.email) == user_email)
+    )).scalars().first()
+
+    if not user:
+        given_name = keycloak_user.get("given_name", "")
+        family_name = keycloak_user.get("family_name", "")
+        username = username_pref or (user_email.split("@")[0] + str(random.randint(1000, 9999)))
+
+        existing_username = (await db_session.execute(
+            select(User).where(func.lower(User.username) == username.lower())
+        )).scalars().first()
+        if existing_username:
+            username = f"{username}_{random.randint(100, 999)}"
+
+        user_object = UserCreate(
+            email=user_email,
+            username=username,
+            password="",
+            first_name=given_name,
+            last_name=family_name,
+            avatar_image="",
+        )
+
+        target_org_id = org_id or 1
+        user = await create_user(
+            request, db_session, current_user, user_object, target_org_id, is_oauth=True, signup_provider="keycloak"
+        )
+        user.email_verified = True
+        user.email_verified_at = datetime.now(timezone.utc).isoformat()
+        db_session.add(user)
+        await db_session.commit()
+        await db_session.refresh(user)
+
+        client_ip = get_client_ip(request)
+        await update_login_info(user, client_ip, db_session)
+        await record_audit_event(
+            event_type=UserAuditEventType.LOGIN,
+            user_id=user.id,
+            ip=client_ip,
+            user_agent=request.headers.get("user-agent"),
+            metadata={"method": "keycloak"},
+        )
+        return UserRead.model_validate(user)
+
+    needs_update = False
+    if not user.email_verified:
+        user.email_verified = True
+        user.email_verified_at = datetime.now(timezone.utc).isoformat()
+        needs_update = True
+
+    if not user.signup_method:
+        user.signup_method = "keycloak"
+        needs_update = True
+
+    if needs_update:
+        db_session.add(user)
+        await db_session.commit()
+        await db_session.refresh(user)
+
+    target_org_id = org_id or 1
+    from src.db.user_organizations import UserOrganization
+    existing_membership = (await db_session.execute(
+        select(UserOrganization).where(
+            (UserOrganization.user_id == user.id) & (UserOrganization.org_id == target_org_id)
+        )
+    )).scalars().first()
+
+    if not existing_membership:
+        new_membership = UserOrganization(
+            user_id=user.id,
+            org_id=target_org_id,
+            role_id=1,
+        )
+        db_session.add(new_membership)
+        await db_session.commit()
+        try:
+            from src.routers.users import _invalidate_session_cache
+            _invalidate_session_cache(user.id)
+        except Exception:
+            pass
+
+    client_ip = get_client_ip(request)
+    await update_login_info(user, client_ip, db_session)
+    await record_audit_event(
+        event_type=UserAuditEventType.LOGIN,
+        user_id=user.id,
+        ip=client_ip,
+        user_agent=request.headers.get("user-agent"),
+        metadata={"method": "keycloak"},
+    )
+    return UserRead.model_validate(user)
+

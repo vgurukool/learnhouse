@@ -108,6 +108,10 @@ env:
   LEARNHOUSE_CONTENT_DELIVERY_TYPE: "filesystem"
   LEARNHOUSE_REDIS_CONNECTION_STRING: "redis://learnhouse-redis:6379"
   LEARNHOUSE_COOKIE_DOMAIN_ALLOW_BROAD: "true"
+  KEYCLOAK_URL: "https://vgurukool.com/keycloak"
+  KEYCLOAK_INTERNAL_URL: "http://keycloak.keycloak.svc.cluster.local/keycloak"
+  KEYCLOAK_REALM: "cnoe"
+  KEYCLOAK_CLIENT_ID: "vgurukool-apps"
 
 nodeSelector: {}
 tolerations: []

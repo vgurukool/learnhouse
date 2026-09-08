@@ -43,7 +43,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: learnhouse/app
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build:
@@ -159,6 +159,9 @@ jobs:
 
           TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${BRANCH}-${SHA_SHORT}"
           TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${BRANCH}"
+          if [ "${BRANCH}" = "main" ]; then
+            TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          fi
 
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 

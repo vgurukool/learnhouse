@@ -1012,6 +1012,58 @@ export function SessionProvider({
           return
         }
 
+        if (provider === 'keycloak') {
+          const { secureAttr, domainAttr, sameSiteAttr } = getCookieAttributes()
+          const baseAttributes = `; path=/${sameSiteAttr}${secureAttr}`
+
+          if (options.orgSlug || options.orgId) {
+            if (options.orgSlug) {
+              document.cookie = `LH_oauth_orgslug=${options.orgSlug}${baseAttributes}${domainAttr}`
+            }
+            if (options.orgId) {
+              document.cookie = `LH_oauth_org_id=${options.orgId}${baseAttributes}${domainAttr}`
+            }
+          }
+
+          const csrfToken = generateSecureToken()
+          const stateData: Record<string, any> = {
+            callbackUrl,
+            csrf: csrfToken,
+            timestamp: Date.now(),
+          }
+
+          if (isCustomDomain()) {
+            stateData.returnOrigin = window.location.origin
+          }
+
+          const state = btoa(JSON.stringify(stateData))
+          setOAuthStateCookie(csrfToken)
+
+          const redirectUri = `${window.location.protocol}//${getLEARNHOUSE_DOMAIN_VAL()}/auth/callback/keycloak`
+
+          const authResponse = await fetch('/api/auth/keycloak/authorize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ redirect_uri: redirectUri, state, scope: 'openid email profile' }),
+          })
+
+          if (!authResponse.ok) {
+            const errorData = await authResponse.json().catch(() => ({}))
+            console.error('Keycloak OAuth initiation failed:', errorData)
+            return {
+              ok: false,
+              error: errorData.error || 'Keycloak OAuth not configured',
+              url: null,
+              status: authResponse.status,
+            }
+          }
+
+          const { url: keycloakAuthUrl } = await authResponse.json()
+          const safeKeycloakUrl = safeExternalUrl(keycloakAuthUrl)
+          if (safeKeycloakUrl) window.location.href = safeKeycloakUrl
+          return
+        }
+
         // Unknown provider
         return {
           ok: false,

@@ -29,7 +29,7 @@ from src.security.auth import (
     JWT_COOKIE_NAME,
 )
 from src.services.users.users import security_get_user
-from src.services.auth.utils import signWithGoogle, get_google_user_info
+from src.services.auth.utils import signWithGoogle, get_google_user_info, signWithKeycloak
 from src.services.audit.audit import record_audit_event
 from src.db.user_audit_events import UserAuditEventType
 from src.services.dev.dev import isDevModeEnabled
@@ -616,8 +616,8 @@ async def login(
 
 
 class ThirdPartyLogin(BaseModel):
-    email: EmailStr
-    provider: Literal["google"]
+    email: Optional[EmailStr] = None
+    provider: Literal["google", "keycloak"]
     access_token: str
 
 
@@ -692,8 +692,10 @@ async def third_party_login(
         # An org that has turned Google off must not be joinable — or reachable —
         # through the Google button. Same door-level refusal as password login.
         from src.services.orgs.auth_policy import enforce_login_auth_method
+        from src.security.session_context import AUTH_METHOD_SSO
 
-        await enforce_login_auth_method(db_session, org_id, AUTH_METHOD_GOOGLE)
+        _expected_method = AUTH_METHOD_GOOGLE if body.provider == "google" else AUTH_METHOD_SSO
+        await enforce_login_auth_method(db_session, org_id, _expected_method)
 
         join_mechanism = await get_org_join_mechanism(
             request, org_id, current_user, db_session
@@ -796,10 +798,13 @@ async def third_party_login(
 
     user = None
 
-    # Google
+    # Google / Keycloak
     if body.provider == "google":
-
         user = await signWithGoogle(
+            request, body.access_token, body.email, org_id, current_user, db_session
+        )
+    elif body.provider == "keycloak":
+        user = await signWithKeycloak(
             request, body.access_token, body.email, org_id, current_user, db_session
         )
     else:
@@ -870,8 +875,9 @@ async def third_party_login(
     # entirely — and the org-wide require_2fa policy did not catch it either,
     # because the factor exists and so the user counts as compliant. The
     # provenance (amr/sorg) is stamped either way for the org auth-method policy.
+    _amr = AUTH_METHOD_GOOGLE if body.provider == "google" else AUTH_METHOD_SSO
     issue = await issue_session_or_challenge(
-        db_session, user, amr=AUTH_METHOD_GOOGLE, org_id=org_id
+        db_session, user, amr=_amr, org_id=org_id
     )
     if issue.mfa_required:
         return {

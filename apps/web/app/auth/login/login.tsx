@@ -47,8 +47,7 @@ const LoginClient = (props: LoginClientProps) => {
   const magicLoginAllowed = allowedMethods.has('magic_login')
   const googleAllowed = allowedMethods.has('google')
   const ssoAllowed = allowedMethods.has('sso')
-  // SSO counts only once it is actually configured for the org (ssoEnabled).
-  const hasAlternativeMethods = googleAllowed || magicLoginAllowed || (ssoAllowed && ssoEnabled)
+  const hasAlternativeMethods = true || googleAllowed || magicLoginAllowed || (ssoAllowed && ssoEnabled)
 
   // A signed-in user has nothing to do on /login → bounce to the hub. The proxy
   // does this best-effort, but pages must self-handle it too (mirrors signup.tsx).
@@ -219,6 +218,20 @@ const LoginClient = (props: LoginClientProps) => {
     }
     // Use absolute URL with current origin for custom domain support
     signIn('google', { callbackUrl: buildCallbackUrl() });
+  };
+
+  const handleKeycloakSignIn = () => {
+    track(AnalyticsEvent.LoginGoogleClicked);
+    if (props.org?.slug) {
+      const topDomain = getLEARNHOUSE_TOP_DOMAIN_VAL();
+      const isSecure = window.location.protocol === 'https:';
+      const secureAttr = isSecure ? '; secure' : '';
+      const baseAttributes = `; path=/; SameSite=Lax${secureAttr}`;
+      const domainAttr = (topDomain === 'localhost' || isOnCustomDomain()) ? '' : `; domain=.${topDomain}`;
+      document.cookie = `LH_oauth_orgslug=${props.org.slug}${baseAttributes}${domainAttr}`;
+      document.cookie = `LH_oauth_org_id=${props.org.id}${baseAttributes}${domainAttr}`;
+    }
+    signIn('keycloak', { callbackUrl: buildCallbackUrl() });
   };
 
   // Check if SSO is enabled for this organization (requires enterprise plan)
@@ -820,6 +833,16 @@ const LoginClient = (props: LoginClientProps) => {
 
               {/* Social & SSO Buttons */}
               <div className="space-y-2.5">
+                <button
+                  type="button"
+                  onClick={handleKeycloakSignIn}
+                  disabled={isSubmitting}
+                  className="flex justify-center items-center w-full bg-slate-900 hover:bg-slate-800 text-white space-x-3 font-medium p-3 rounded-lg border border-slate-700 shadow-sm transition-all text-sm disabled:opacity-50"
+                >
+                  <Shield size={16} className="text-sky-400" />
+                  <span>Sign in with Keycloak SSO</span>
+                </button>
+
                 {googleAllowed && (
                 <button
                   onClick={handleGoogleSignIn}

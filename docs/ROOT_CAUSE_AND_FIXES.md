@@ -189,3 +189,32 @@ curl -k -i -s -X POST https://learnhouse.vgurukool.com/api/auth/login \
 kubectl get application -n argocd learnhouse -o jsonpath='Sync: {.status.sync.status} | Health: {.status.health.status}'
 # Expected: Sync: Synced | Health: Healthy
 ```
+
+---
+
+## 4. Keycloak Single Sign-On (SSO) Integration
+
+### Objective
+Enable seamless SSO login using the shared Keycloak authentication realm (`cnoe`) and client (`vgurukool-apps`) across all vgurukool platforms, including LearnHouse LMS.
+
+### Architecture & Data Flow
+1. **SSO Button & Redirection:**
+   * On `https://learnhouse.vgurukool.com/login`, users see the **"Sign in with Keycloak SSO"** option.
+   * Clicking the button invokes `/api/auth/keycloak/authorize`, which redirects the browser to:
+     `https://vgurukool.com/keycloak/realms/cnoe/protocol/openid-connect/auth` with `client_id=vgurukool-apps`, `response_type=code`, `scope=openid email profile`, and `redirect_uri=https://learnhouse.vgurukool.com/auth/callback/keycloak`.
+2. **Authorization Code Exchange:**
+   * Upon successful Keycloak login, Keycloak redirects back to `/auth/callback/keycloak?code=...`.
+   * The callback page calls `/api/auth/keycloak/token` to exchange the authorization code for an `access_token` and `id_token`.
+3. **Backend User Provisioning & Session Generation:**
+   * The callback calls the backend `/api/v1/auth/third-party/login` with `provider: "keycloak"` and the access token.
+   * `signWithKeycloak` verifies the token with Keycloak's userinfo endpoint (`http://keycloak.keycloak.svc.cluster.local/keycloak/realms/cnoe/protocol/openid-connect/userinfo`).
+   * The user is automatically provisioned if new, associated with the default organization (`org_id=1`), given email verified status, and issued LearnHouse JWT session tokens (`LH_access`, `LH_refresh`, `LH_session`).
+   * The client updates the local NextAuth/AuthContext session and redirects to `/home`.
+
+### Configuration
+* **ConfigMap / Environment Variables (`learnhouse-config`):**
+  * `KEYCLOAK_URL`: `https://vgurukool.com/keycloak`
+  * `KEYCLOAK_INTERNAL_URL`: `http://keycloak.keycloak.svc.cluster.local/keycloak`
+  * `KEYCLOAK_REALM`: `cnoe`
+  * `KEYCLOAK_CLIENT_ID`: `vgurukool-apps`
+
