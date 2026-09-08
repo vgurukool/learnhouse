@@ -235,7 +235,20 @@ Enable seamless SSO login using the shared Keycloak authentication realm (`cnoe`
   * Request to `/api/auth/oauth` with Keycloak bearer token succeeded with `HTTP 200 OK`.
   * LearnHouse User ID: `3` (`user2@vgurukool.com`), `email_verified: true`, `signup_method: "keycloak"`.
   * Issued session cookies: `LH_access`, `LH_refresh`, `LH_session=1`.
-* **Local Administrator Login (`admin@vgurukool.com`):**
-  * Verified working via `/api/v1/auth/login` with `HTTP 200 OK` (`is_superadmin: true`).
+### Issue F: Keycloak Client Missing LearnHouse Redirect URI (`Invalid parameter: redirect_uri`)
+* **Mechanism:**
+  * When users clicked "Sign in with Keycloak SSO" on LearnHouse (`https://learnhouse.vgurukool.com/login`), the browser was redirected to Keycloak's authorization endpoint with `redirect_uri=https://learnhouse.vgurukool.com/auth/callback/keycloak`.
+  * Keycloak 26 enforces strict URI validation and rejects wildcard domain patterns (`https://*.vgurukool.com/*`) unless specific origins or endpoints are registered.
+  * The Keycloak client `vgurukool-apps` only had explicit entries for `ashta-lakshmi`, `dhana-lakshmi`, `dhanya-lakshmi`, `gaja-lakshmi`, and `vidya-lakshmi`. Because `learnhouse.vgurukool.com` was missing, Keycloak threw the error page:
+    ```text
+    We are sorry...
+    Invalid parameter: redirect_uri
+    [« Back to Application](https://vgurukool.com/)
+    ```
+* **Fix Applied:**
+  * Added `https://learnhouse.vgurukool.com/*` and `https://learnhouse.vgurukool.com/auth/callback/keycloak` to the `redirect_uris` table in Keycloak's database for client `vgurukool-apps`.
+  * Restarted the Keycloak StatefulSet (`kubectl rollout restart statefulset/keycloak -n keycloak`) to refresh its internal Infinispan client cache.
+  * Verified that `GET /auth` with `redirect_uri=https://learnhouse.vgurukool.com/auth/callback/keycloak` now renders the Keycloak Sign In form (`HTTP 200 OK`).
+
 
 
