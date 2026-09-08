@@ -218,3 +218,24 @@ Enable seamless SSO login using the shared Keycloak authentication realm (`cnoe`
   * `KEYCLOAK_REALM`: `cnoe`
   * `KEYCLOAK_CLIENT_ID`: `vgurukool-apps`
 
+### Issue E: SSO Router Scope & New User Provisioning Model Mismatch
+* **Mechanism:**
+  1. In `apps/api/src/routers/auth.py`, `AUTH_METHOD_SSO` was conditionally imported inside a downstream block, triggering an `UnboundLocalError` when evaluating `_expected_method` during third-party authentication.
+  2. In `apps/api/src/services/auth/utils.py` (`signWithKeycloak`), when a user logged in for the first time, `create_user()` returned a Pydantic `UserRead` model instead of the SQLAlchemy `User` entity. Setting `user.email_verified_at = ...` caused `ValueError: "UserRead" object has no field "email_verified_at"`.
+* **Fix Applied:**
+  1. In `apps/api/src/routers/auth.py`, imported `AUTH_METHOD_SSO` at the top level of the module alongside `AUTH_METHOD_GOOGLE` and `AUTH_METHOD_PASSWORD`.
+  2. In `apps/api/src/services/auth/utils.py`, retrieved the database `User` instance by ID after calling `create_user()`, set `email_verified = True` and `email_verified_at`, committed changes to the session, and returned `UserRead.model_validate(user)`.
+
+### Verification Evidence
+* **Existing User Login (`user1`):**
+  * Request to `/api/auth/oauth` with Keycloak bearer token succeeded with `HTTP 200 OK`.
+  * LearnHouse User ID: `2` (`user1@vgurukool.com`), `email_verified: true`.
+  * Issued session cookies: `LH_access`, `LH_refresh`, `LH_session=1`.
+* **New User Auto-Provisioning (`user2`):**
+  * Request to `/api/auth/oauth` with Keycloak bearer token succeeded with `HTTP 200 OK`.
+  * LearnHouse User ID: `3` (`user2@vgurukool.com`), `email_verified: true`, `signup_method: "keycloak"`.
+  * Issued session cookies: `LH_access`, `LH_refresh`, `LH_session=1`.
+* **Local Administrator Login (`admin@vgurukool.com`):**
+  * Verified working via `/api/v1/auth/login` with `HTTP 200 OK` (`is_superadmin: true`).
+
+
