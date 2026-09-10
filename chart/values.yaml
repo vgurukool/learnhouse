@@ -115,7 +115,7 @@ env:
   LEARNHOUSE_IS_AI_ENABLED: "true"
   LEARNHOUSE_AI_PROVIDER: "openai"
   LEARNHOUSE_AI_API_KEY: "sk-litellm-vgurukool-master-2026"
-  LEARNHOUSE_AI_BASE_URL: "http://litellm.vgurukool.svc.cluster.local:4000/v1"
+  LEARNHOUSE_AI_BASE_URL: "http://litellm.litellm.svc.cluster.local:4000/v1"
   LEARNHOUSE_AI_MODEL_STANDARD: "gemini-2.5-flash"
   LEARNHOUSE_AI_MODEL_FAST: "gemini-2.5-flash"
   LEARNHOUSE_AI_MODEL_PRO: "gemini-2.5-flash"
