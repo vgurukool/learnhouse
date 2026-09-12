@@ -124,3 +124,9 @@ env:
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
+# Pod Topology Spread Constraints to distribute pods evenly across nodes and zones
+topologySpread:
+  enabled: true
+  maxSkew: 1
+  whenUnsatisfiable: ScheduleAnyway
