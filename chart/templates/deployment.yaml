@@ -68,6 +68,7 @@ spec:
                   - /bin/sh
                   - -c
                   - |
+                    sed -i 's/localhost:9000/127.0.0.1:9000/g; s/localhost:8000/127.0.0.1:8000/g; s/localhost:4000/127.0.0.1:4000/g' /etc/nginx/conf.d/default.conf && nginx -s reload || true
                     python3 -c "
                     import glob
                     for fp in glob.glob('/app/web/.next/**/*.js', recursive=True):
