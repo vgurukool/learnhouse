@@ -61,6 +61,27 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    python3 -c "
+                    import glob
+                    for fp in glob.glob('/app/web/.next/**/*.js', recursive=True):
+                        try:
+                            with open(fp, 'r') as f:
+                                c = f.read()
+                            if 'ADD_TAGS:[\"iframe\"]' in c:
+                                c = c.replace('ADD_TAGS:[\"iframe\"]', 'ADD_TAGS:[\"iframe\",\"audio\",\"source\"]')
+                                c = c.replace('\"scrolling\",\"name\"]', '\"scrolling\",\"name\",\"controls\",\"preload\",\"type\"]')
+                                with open(fp, 'w') as f:
+                                    f.write(c)
+                        except Exception:
+                            pass
+                    "
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

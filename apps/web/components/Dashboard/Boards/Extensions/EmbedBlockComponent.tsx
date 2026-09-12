@@ -102,10 +102,11 @@ export default function EmbedBlockComponent({ node, updateAttributes, selected, 
   useEffect(() => {
     if (embedType === 'code' && embedCode) {
       setSanitizedCode(DOMPurify.sanitize(embedCode, {
-        ADD_TAGS: ['iframe'],
+        ADD_TAGS: ['iframe', 'audio', 'source'],
         ALLOWED_ATTR: [
           'src', 'frameborder', 'allowfullscreen', 'allow', 'width', 'height',
           'style', 'class', 'title', 'loading', 'referrerpolicy', 'scrolling', 'name',
+          'controls', 'preload', 'type',
         ],
       }))
     }
