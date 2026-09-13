@@ -29,7 +29,7 @@ from src.security.auth import (
     JWT_COOKIE_NAME,
 )
 from src.services.users.users import security_get_user
-from src.services.auth.utils import signWithGoogle, get_google_user_info, signWithKeycloak
+from src.services.auth.utils import signWithGoogle, get_google_user_info, signWithKeycloak, get_keycloak_user_info
 from src.services.audit.audit import record_audit_event
 from src.db.user_audit_events import UserAuditEventType
 from src.services.dev.dev import isDevModeEnabled
@@ -721,8 +721,12 @@ async def third_party_login(
                         detail="Google did not return a verified email for this account",
                     )
                 _invite_email = _verified_email.strip().lower()
+            elif body.provider == "keycloak":
+                _keycloak_user = await get_keycloak_user_info(body.access_token)
+                _verified_email = _keycloak_user.get("email") or f"{_keycloak_user.get('preferred_username', 'user')}@vgurukool.com"
+                _invite_email = _verified_email.strip().lower()
             else:
-                _invite_email = body.email.strip().lower()
+                _invite_email = body.email.strip().lower() if body.email else ""
 
             _authorized = False
 

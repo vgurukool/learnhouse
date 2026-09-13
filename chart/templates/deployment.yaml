@@ -68,7 +68,22 @@ spec:
                   - /bin/sh
                   - -c
                   - |
-                    sed -i 's/localhost:9000/127.0.0.1:9000/g; s/localhost:8000/127.0.0.1:8000/g; s/localhost:4000/127.0.0.1:4000/g' /etc/nginx/conf.d/default.conf && nginx -s reload || true
+                    sed -i 's/localhost:9000/127.0.0.1:9000/g; s/localhost:8000/127.0.0.1:8000/g; s/localhost:4000/127.0.0.1:4000/g' /etc/nginx/conf.d/default.conf
+                    if ! grep -q 'rewrite \^/orgs/default/' /etc/nginx/conf.d/default.conf; then
+                      sed -i '/server_name localhost;/a \    absolute_redirect off;\n    rewrite ^/orgs/default/courses/(course_[a-zA-Z0-9_-]+)/?$ /course/$1 permanent;\n    rewrite ^/courses/(course_[a-zA-Z0-9_-]+)/?$ /course/$1 permanent;\n    rewrite ^/orgs/default/(.*)$ /$1 permanent;' /etc/nginx/conf.d/default.conf
+                    fi
+                    nginx -s reload || true
+                    (
+                      for i in $(seq 1 30); do
+                        if nc -z 127.0.0.1 9000; then
+                          break
+                        fi
+                        sleep 3
+                        if ! nc -z 127.0.0.1 9000; then
+                          pm2 restart learnhouse-api || true
+                        fi
+                      done
+                    ) &
                     python3 -c "
                     import glob
                     for fp in glob.glob('/app/web/.next/**/*.js', recursive=True):
