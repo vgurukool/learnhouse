@@ -73,32 +73,6 @@ spec:
                       sed -i '/server_name localhost;/a \    absolute_redirect off;\n    rewrite ^/orgs/default/courses/(course_[a-zA-Z0-9_-]+)/?$ /course/$1 permanent;\n    rewrite ^/courses/(course_[a-zA-Z0-9_-]+)/?$ /course/$1 permanent;\n    rewrite ^/orgs/default/(.*)$ /$1 permanent;' /etc/nginx/conf.d/default.conf
                     fi
                     nginx -s reload || true
-                    (
-                      for i in $(seq 1 30); do
-                        if nc -z 127.0.0.1 9000; then
-                          break
-                        fi
-                        sleep 3
-                        if ! nc -z 127.0.0.1 9000; then
-                          pm2 restart learnhouse-api || true
-                        fi
-                      done
-                    ) &
-                    python3 -c "
-                    import os, subprocess
-                    try:
-                        out = subprocess.check_output(['grep', '-rl', 'ADD_TAGS:[\"iframe\"]', '/app/web/.next']).decode()
-                        for fp in out.strip().splitlines():
-                            if fp:
-                                with open(fp, 'r') as f:
-                                    c = f.read()
-                                c = c.replace('ADD_TAGS:[\"iframe\"]', 'ADD_TAGS:[\"iframe\",\"audio\",\"source\"]')
-                                c = c.replace('\"scrolling\",\"name\"]', '\"scrolling\",\"name\",\"controls\",\"preload\",\"type\"]')
-                                with open(fp, 'w') as f:
-                                    f.write(c)
-                    except Exception:
-                        pass
-                    "
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
