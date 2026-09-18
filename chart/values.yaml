@@ -35,6 +35,7 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/websocket-services: "learnhouse"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
   hosts:
     - host: learnhouse.vgurukool.com
       paths:
@@ -114,12 +115,14 @@ env:
   KEYCLOAK_CLIENT_ID: "vgurukool-apps"
   LEARNHOUSE_IS_AI_ENABLED: "true"
   LEARNHOUSE_AI_PROVIDER: "openai"
-  LEARNHOUSE_AI_API_KEY: "sk-litellm-vgurukool-master-2026"
+  LEARNHOUSE_AI_API_KEY: ""
   LEARNHOUSE_AI_BASE_URL: "http://litellm.litellm.svc.cluster.local:4000/v1"
   LEARNHOUSE_AI_MODEL_STANDARD: "gemini-2.5-flash"
   LEARNHOUSE_AI_MODEL_FAST: "gemini-2.5-flash"
   LEARNHOUSE_AI_MODEL_PRO: "gemini-2.5-flash"
-  LEARNHOUSE_GEMINI_API_KEY: "sk-litellm-vgurukool-master-2026"
+  LEARNHOUSE_GEMINI_API_KEY: ""
+  LEARNHOUSE_ANALYTICS_ENABLED: "true"
+
 
 nodeSelector: {}
 tolerations: []
