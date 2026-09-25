@@ -51,6 +51,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "learnhouse.fullname" . }}-config
+            {{- if .Values.existingSecret }}
+            - secretRef:
+                name: {{ .Values.existingSecret }}
+            {{- else if and .Values.externalSecrets .Values.externalSecrets.enabled }}
+            - secretRef:
+                name: {{ include "learnhouse.fullname" . }}-secret
+            {{- end }}
           {{- if .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}

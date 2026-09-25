@@ -91,10 +91,10 @@ env:
   LEARNHOUSE_SSL: "true"
   LEARNHOUSE_COOKIE_DOMAIN: ".vgurukool.com"
   NEXTAUTH_URL: "https://learnhouse.vgurukool.com"
-  NEXTAUTH_SECRET: "cnoe-vgurukool-nextauth-secret-key-2026-prod"
-  LEARNHOUSE_AUTH_JWT_SECRET_KEY: "cnoe-vgurukool-learnhouse-jwt-secret-key-2026-prod"
-  COLLAB_INTERNAL_KEY: "cnoe-vgurukool-collab-internal-key-2026-prod"
-  LEARNHOUSE_SQL_CONNECTION_STRING: "postgresql://learnhouse_user:LearnHouse2026SecurePass@postgres-cluster.postgres.svc.cluster.local:5432/learnhouse_db"
+  NEXTAUTH_SECRET: "" # Managed securely via ExternalSecret / Secret
+  LEARNHOUSE_AUTH_JWT_SECRET_KEY: "" # Managed securely via ExternalSecret / Secret
+  COLLAB_INTERNAL_KEY: "" # Managed securely via ExternalSecret / Secret
+  LEARNHOUSE_SQL_CONNECTION_STRING: "" # Injected securely from Secret
   NEXT_PUBLIC_LEARNHOUSE_API_URL: "https://learnhouse.vgurukool.com/api/v1/"
   NEXT_PUBLIC_LEARNHOUSE_BACKEND_URL: "https://learnhouse.vgurukool.com/"
   NEXT_PUBLIC_LEARNHOUSE_DOMAIN: "learnhouse.vgurukool.com"
@@ -103,7 +103,7 @@ env:
   NEXT_PUBLIC_LEARNHOUSE_HTTPS: "True"
   NEXT_PUBLIC_COLLAB_URL: "wss://learnhouse.vgurukool.com/collab"
   LEARNHOUSE_INITIAL_ADMIN_EMAIL: "admin@vgurukool.com"
-  LEARNHOUSE_INITIAL_ADMIN_PASSWORD: "-0GZHFZX--Ghhe53q8L-z-M9YEEWSPWD"
+  LEARNHOUSE_INITIAL_ADMIN_PASSWORD: "" # Injected securely from Secret
   LEARNHOUSE_INITIAL_ORG_NAME: "Vgurukool Academy"
   LEARNHOUSE_INITIAL_ORG_SLUG: "default"
   LEARNHOUSE_CONTENT_DELIVERY_TYPE: "filesystem"
@@ -125,6 +125,14 @@ env:
 
 database:
   embedded: false
+
+externalSecrets:
+  enabled: true
+  clusterSecretStore: aws-secretsmanager
+  remoteSecrets:
+    dbPasswordKey: ""
+
+existingSecret: ""
 
 nodeSelector: {}
 tolerations: []
